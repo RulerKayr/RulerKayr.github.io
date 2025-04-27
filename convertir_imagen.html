@@ -205,14 +205,23 @@
       <p>Nivel de desenfoque: <span id="blurValue">5</span></p>
     </div>
 
-    <!-- Selector de modelos de color (RGB, HSI, HSV) -->
+    <!-- Selector de modelos de color (RGB, HSI, HSV, Cool, Jet, Hot, Parula) -->
     <div id="colorModelSelect" class="slider-container">
-      <label for="colorModel">Seleccionar modelo de color:</label>
+      <label for="colorModel">Seleccionar mapa de color:</label>
       <select id="colorModel">
         <option value="rgb">RGB</option>
         <option value="hsi">HSI</option>
         <option value="hsv">HSV</option>
+        <option value="cool">Cool</option>
+        <option value="jet">Jet</option>
+        <option value="hot">Hot</option>
+        <option value="parula">Parula</option>
       </select>
+    </div>
+
+    <!-- Opción para ver histograma -->
+    <div>
+      <button onclick="showHistogram()">Ver Histograma</button>
     </div>
 
     <!-- Mensaje de carga -->
@@ -220,6 +229,11 @@
 
     <!-- Canvas donde se mostrará la imagen -->
     <canvas id="canvas"></canvas>
+
+    <!-- Histograma -->
+    <div id="histogram" style="display: none;">
+      <canvas id="histogramCanvas" width="600" height="150"></canvas>
+    </div>
     
     <!-- Enlace de descarga -->
     <div>
@@ -235,6 +249,7 @@
     let img = new Image();
     let canvas = document.getElementById('canvas');
     let ctx = canvas.getContext('2d');
+    let originalImageData;
 
     // Cargar la imagen en el canvas
     document.getElementById('inputImage').addEventListener('change', (event) => {
@@ -245,6 +260,7 @@
           canvas.width = img.width;
           canvas.height = img.height;
           ctx.drawImage(img, 0, 0);
+          originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         };
         img.src = e.target.result;
       };
@@ -381,6 +397,34 @@
       }
 
       ctx.putImageData(imageData, 0, 0);
+    }
+
+    // Mostrar histograma
+    function showHistogram() {
+      let imageData = originalImageData || ctx.getImageData(0, 0, canvas.width, canvas.height);
+      let data = imageData.data;
+      let histogram = new Array(256).fill(0);
+
+      // Crear el histograma
+      for (let i = 0; i < data.length; i += 4) {
+        let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        histogram[Math.floor(avg)]++;
+      }
+
+      // Dibujar el histograma en un canvas
+      let histogramCanvas = document.getElementById('histogramCanvas');
+      let hCtx = histogramCanvas.getContext('2d');
+      let max = Math.max(...histogram);
+      
+      // Normalizar el histograma
+      hCtx.clearRect(0, 0, histogramCanvas.width, histogramCanvas.height);
+      hCtx.beginPath();
+      for (let i = 0; i < histogram.length; i++) {
+        let height = (histogram[i] / max) * histogramCanvas.height;
+        hCtx.lineTo(i, histogramCanvas.height - height);
+      }
+      hCtx.stroke();
+      document.getElementById("histogram").style.display = "block";
     }
   </script>
 </body>
