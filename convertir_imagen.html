@@ -3,64 +3,111 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Convertir PNG a JPG</title>
+  <title>Editor de Imágenes - Conversión y Filtros</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    #result { margin-top: 20px; }
-    #download-link { display: none; }
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f0f0f0; }
+    h1 { text-align: center; }
+    .container { display: flex; flex-direction: column; align-items: center; }
+    .buttons { margin: 20px 0; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin: 5px; }
+    .filters { margin-top: 20px; }
+    canvas { border: 1px solid #ccc; margin-top: 20px; }
   </style>
 </head>
 <body>
-  <h1>Convertir PNG a JPG</h1>
-  
-  <input type="file" id="inputImage" accept="image/png">
-  <button onclick="convertToJPG()">Convertir a JPG</button>
-
-  <div id="result">
-    <h3>Imagen Convertida:</h3>
-    <a id="download-link" href="" download="imagen_convertida.jpg">Descargar Imagen Convertida</a>
+  <h1>Editor de Imágenes - Conversión y Filtros</h1>
+  <div class="container">
+    <!-- Sección para cargar y convertir imágenes -->
+    <input type="file" id="inputImage" accept="image/*" />
+    <div class="buttons">
+      <button onclick="convertImage('jpeg')">Convertir a JPG</button>
+      <button onclick="convertImage('png')">Convertir a PNG</button>
+      <button onclick="convertImage('gif')">Convertir a GIF</button>
+    </div>
+    
+    <!-- Sección para aplicar filtros -->
+    <div class="filters">
+      <button onclick="applyFilter('bw')">Blanco y Negro</button>
+      <button onclick="applyFilter('sepia')">Sepia</button>
+      <button onclick="applyFilter('invert')">Invertir Colores</button>
+      <button onclick="applyFilter('brightness')">Brillo</button>
+    </div>
+    
+    <!-- Mostrar la imagen convertida o modificada -->
+    <canvas id="canvas"></canvas>
+    <div>
+      <a id="download-link" href="" download="imagen_convertida">Descargar Imagen Convertida</a>
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas/2.0.0/canvas.min.js"></script>
   <script>
-    function convertToJPG() {
-      const fileInput = document.getElementById('inputImage');
-      const file = fileInput.files[0];
-      
-      if (!file) {
-        alert('Por favor selecciona una imagen.');
-        return;
-      }
+    let img = new Image();
+    let canvas = document.getElementById('canvas');
+    let ctx = canvas.getContext('2d');
 
-      const reader = new FileReader();
-      
-      reader.onload = function(event) {
-        const img = new Image();
-        img.onload = function() {
-          // Crear un canvas para procesar la imagen
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          // Establecer el tamaño del canvas según la imagen
+    // Cargar la imagen en el canvas
+    document.getElementById('inputImage').addEventListener('change', (event) => {
+      let file = event.target.files[0];
+      let reader = new FileReader();
+      reader.onload = function (e) {
+        img.onload = function () {
           canvas.width = img.width;
           canvas.height = img.height;
-          
-          // Dibujar la imagen en el canvas
           ctx.drawImage(img, 0, 0);
-          
-          // Convertir el contenido del canvas a JPG
-          const jpgDataUrl = canvas.toDataURL('image/jpeg');
-
-          // Mostrar el enlace de descarga
-          const downloadLink = document.getElementById('download-link');
-          downloadLink.href = jpgDataUrl;
-          downloadLink.style.display = 'block'; // Mostrar el enlace
         };
-        
-        img.src = event.target.result;
+        img.src = e.target.result;
       };
-      
-      reader.readAsDataURL(file); // Cargar la imagen
+      reader.readAsDataURL(file);
+    });
+
+    // Función para convertir la imagen a diferentes formatos
+    function convertImage(format) {
+      let dataUrl = canvas.toDataURL(`image/${format}`);
+      let downloadLink = document.getElementById('download-link');
+      downloadLink.href = dataUrl;
+      downloadLink.download = `imagen_convertida.${format}`;
+    }
+
+    // Función para aplicar filtros
+    function applyFilter(filterType) {
+      ctx.drawImage(img, 0, 0);
+      let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      let data = imageData.data;
+
+      switch (filterType) {
+        case 'bw': // Blanco y Negro
+          for (let i = 0; i < data.length; i += 4) {
+            let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+            data[i] = data[i + 1] = data[i + 2] = avg;
+          }
+          break;
+        case 'sepia': // Sepia
+          for (let i = 0; i < data.length; i += 4) {
+            let r = data[i];
+            let g = data[i + 1];
+            let b = data[i + 2];
+            data[i] = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189);
+            data[i + 1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168);
+            data[i + 2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131);
+          }
+          break;
+        case 'invert': // Invertir Colores
+          for (let i = 0; i < data.length; i += 4) {
+            data[i] = 255 - data[i];     // R
+            data[i + 1] = 255 - data[i + 1]; // G
+            data[i + 2] = 255 - data[i + 2]; // B
+          }
+          break;
+        case 'brightness': // Brillo
+          for (let i = 0; i < data.length; i += 4) {
+            data[i] += 50;     // R
+            data[i + 1] += 50; // G
+            data[i + 2] += 50; // B
+          }
+          break;
+      }
+      ctx.putImageData(imageData, 0, 0);
     }
   </script>
 </body>
