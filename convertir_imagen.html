@@ -179,11 +179,10 @@
       <button onclick="applyFilter('blur')">Desenfoque</button>
     </div>
 
-    <!-- Opciones adicionales para blanco y negro (binarización) -->
-    <div id="binOptions" class="slider-container" style="display: none;">
-      <label for="binSlider">Binarización:</label>
-      <input type="range" id="binSlider" class="slider" min="0" max="255" value="128" step="1">
-      <p id="binValue">Valor: 128</p>
+    <!-- Opción para binarizar la imagen (Checkbox) -->
+    <div id="binarizeOption" style="display: none;">
+      <label for="binarizeCheckbox">Activar Binarización:</label>
+      <input type="checkbox" id="binarizeCheckbox">
     </div>
 
     <!-- Controles para brillo y contraste -->
@@ -204,6 +203,16 @@
       <label for="blurSlider">Nivel de Desenfoque:</label>
       <input type="range" id="blurSlider" class="slider" min="1" max="10" value="5" step="1">
       <p>Nivel de desenfoque: <span id="blurValue">5</span></p>
+    </div>
+
+    <!-- Selector de modelos de color (RGB, HSI, HSV) -->
+    <div id="colorModelSelect" class="slider-container">
+      <label for="colorModel">Seleccionar modelo de color:</label>
+      <select id="colorModel">
+        <option value="rgb">RGB</option>
+        <option value="hsi">HSI</option>
+        <option value="hsv">HSV</option>
+      </select>
     </div>
 
     <!-- Mensaje de carga -->
@@ -264,7 +273,7 @@
 
       switch (filterType) {
         case 'bw': // Blanco y Negro
-          document.getElementById("binOptions").style.display = "block";
+          document.getElementById("binarizeOption").style.display = "block";
           for (let i = 0; i < data.length; i += 4) {
             let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
             data[i] = data[i + 1] = data[i + 2] = avg;
@@ -317,7 +326,7 @@
 
     // Función para esconder todos los controles deslizantes
     function hideAllSliders() {
-      document.getElementById("binOptions").style.display = "none";
+      document.getElementById("binarizeOption").style.display = "none";
       document.getElementById("brightnessContainer").style.display = "none";
       document.getElementById("contrastContainer").style.display = "none";
       document.getElementById("blurContainer").style.display = "none";
@@ -351,9 +360,28 @@
     }
 
     // Binarización de la imagen (ajustable)
-    document.getElementById("binSlider").addEventListener('input', function() {
-      document.getElementById("binValue").textContent = 'Valor: ' + this.value;
+    document.getElementById("binarizeCheckbox").addEventListener('change', function() {
+      if (this.checked) {
+        applyBinarization();
+      }
     });
+
+    function applyBinarization() {
+      let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      let data = imageData.data;
+      let threshold = 128;
+
+      for (let i = 0; i < data.length; i += 4) {
+        let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        if (avg > threshold) {
+          data[i] = data[i + 1] = data[i + 2] = 255; // Blanco
+        } else {
+          data[i] = data[i + 1] = data[i + 2] = 0;   // Negro
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+    }
   </script>
 </body>
 </html>
