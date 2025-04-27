@@ -5,48 +5,152 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Editor de Imágenes - Conversión y Filtros</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f0f0f0; }
-    h1 { text-align: center; }
-    .container { display: flex; flex-direction: column; align-items: center; }
-    .buttons { margin: 20px 0; }
-    button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin: 5px; }
-    .filters { margin-top: 20px; }
-    canvas { border: 1px solid #ccc; margin-top: 20px; }
+    /* Fondo y diseño básico */
+    body {
+      background: linear-gradient(to right, #ff7e5f, #feb47b); /* Fondo con gradiente */
+      font-family: 'Arial', sans-serif;
+      color: white;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background-color: #ffffff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+      width: 80%;
+      max-width: 800px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    /* Cuadro del canvas */
+    canvas {
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 600px;
+    }
+
+    /* Botones */
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      margin: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #45a049;
+      transform: scale(1.05);
+    }
+
+    .filters button {
+      background-color: #009688;
+    }
+
+    .filters button:hover {
+      background-color: #00796b;
+    }
+
+    /* Sección de filtros */
+    .filters {
+      margin-top: 20px;
+    }
+
+    .buttons {
+      margin: 20px 0;
+    }
+
+    #loading {
+      font-size: 18px;
+      color: #333;
+      display: none;
+    }
+
+    /* Animaciones suaves */
+    @keyframes fadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    .container {
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    /* Estilo responsive */
+    @media screen and (max-width: 768px) {
+      button {
+        width: 100%;
+        padding: 12px;
+      }
+
+      .container {
+        width: 95%;
+        padding: 15px;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Editor de Imágenes - Conversión y Filtros</h1>
   <div class="container">
-    <!-- Sección para cargar y convertir imágenes -->
+    <h1>Editor de Imágenes - Conversión y Filtros</h1>
+
+    <!-- Carga de imagen -->
     <input type="file" id="inputImage" accept="image/*" />
+    
+    <!-- Botones para convertir -->
     <div class="buttons">
       <button onclick="convertImage('jpeg')">Convertir a JPG</button>
       <button onclick="convertImage('png')">Convertir a PNG</button>
       <button onclick="convertImage('gif')">Convertir a GIF</button>
     </div>
-    
-    <!-- Sección para aplicar filtros -->
+
+    <!-- Filtros -->
     <div class="filters">
       <button onclick="applyFilter('bw')">Blanco y Negro</button>
       <button onclick="applyFilter('sepia')">Sepia</button>
       <button onclick="applyFilter('invert')">Invertir Colores</button>
       <button onclick="applyFilter('brightness')">Brillo</button>
+      <button onclick="applyFilter('contrast')">Contraste</button>
+      <button onclick="applyFilter('blur')">Desenfoque</button>
     </div>
-    
-    <!-- Mostrar la imagen convertida o modificada -->
+
+    <!-- Mensaje de carga -->
+    <div id="loading">Cargando...</div>
+
+    <!-- Canvas donde se mostrará la imagen -->
     <canvas id="canvas"></canvas>
+    
+    <!-- Enlace de descarga -->
     <div>
       <a id="download-link" href="" download="imagen_convertida">Descargar Imagen Convertida</a>
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas/2.0.0/canvas.min.js"></script>
   <script>
     let img = new Image();
     let canvas = document.getElementById('canvas');
     let ctx = canvas.getContext('2d');
 
-    // Cargar la imagen en el canvas
+    // Cargar imagen en el canvas
     document.getElementById('inputImage').addEventListener('change', (event) => {
       let file = event.target.files[0];
       let reader = new FileReader();
@@ -63,14 +167,17 @@
 
     // Función para convertir la imagen a diferentes formatos
     function convertImage(format) {
+      document.getElementById("loading").style.display = "block";
       let dataUrl = canvas.toDataURL(`image/${format}`);
       let downloadLink = document.getElementById('download-link');
       downloadLink.href = dataUrl;
       downloadLink.download = `imagen_convertida.${format}`;
+      document.getElementById("loading").style.display = "none";
     }
 
     // Función para aplicar filtros
     function applyFilter(filterType) {
+      document.getElementById("loading").style.display = "block";
       ctx.drawImage(img, 0, 0);
       let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       let data = imageData.data;
@@ -84,9 +191,7 @@
           break;
         case 'sepia': // Sepia
           for (let i = 0; i < data.length; i += 4) {
-            let r = data[i];
-            let g = data[i + 1];
-            let b = data[i + 2];
+            let r = data[i], g = data[i + 1], b = data[i + 2];
             data[i] = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189);
             data[i + 1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168);
             data[i + 2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131);
@@ -94,9 +199,9 @@
           break;
         case 'invert': // Invertir Colores
           for (let i = 0; i < data.length; i += 4) {
-            data[i] = 255 - data[i];     // R
-            data[i + 1] = 255 - data[i + 1]; // G
-            data[i + 2] = 255 - data[i + 2]; // B
+            data[i] = 255 - data[i];
+            data[i + 1] = 255 - data[i + 1];
+            data[i + 2] = 255 - data[i + 2];
           }
           break;
         case 'brightness': // Brillo
@@ -106,8 +211,48 @@
             data[i + 2] += 50; // B
           }
           break;
+        case 'contrast': // Contraste
+          for (let i = 0; i < data.length; i += 4) {
+            data[i] = data[i] * 1.5;
+            data[i + 1] = data[i + 1] * 1.5;
+            data[i + 2] = data[i + 2] * 1.5;
+          }
+          break;
+        case 'blur': // Desenfoque
+          let blurImage = applyBlur(imageData);
+          imageData = blurImage;
+          break;
       }
+
       ctx.putImageData(imageData, 0, 0);
+      document.getElementById("loading").style.display = "none";
+    }
+
+    // Función para aplicar desenfoque
+    function applyBlur(imageData) {
+      const data = imageData.data;
+      const width = imageData.width;
+      const height = imageData.height;
+
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          const i = (y * width + x) * 4;
+          let r = 0, g = 0, b = 0;
+          for (let j = -1; j <= 1; j++) {
+            for (let k = -1; k <= 1; k++) {
+              const n = ((y + j) * width + (x + k)) * 4;
+              r += data[n];
+              g += data[n + 1];
+              b += data[n + 2];
+            }
+          }
+          data[i] = r / 9;
+          data[i + 1] = g / 9;
+          data[i + 2] = b / 9;
+        }
+      }
+
+      return imageData;
     }
   </script>
 </body>
