@@ -187,20 +187,20 @@
     </div>
 
     <!-- Controles para brillo y contraste -->
-    <div class="slider-container">
+    <div class="slider-container" id="brightnessContainer" style="display: none;">
       <label for="brightnessSlider">Brillo:</label>
       <input type="range" id="brightnessSlider" class="slider" min="-100" max="100" value="0" step="1">
       <p>Valor de brillo: <span id="brightnessValue">0</span></p>
     </div>
 
-    <div class="slider-container">
+    <div class="slider-container" id="contrastContainer" style="display: none;">
       <label for="contrastSlider">Contraste:</label>
       <input type="range" id="contrastSlider" class="slider" min="-100" max="100" value="0" step="1">
       <p>Valor de contraste: <span id="contrastValue">0</span></p>
     </div>
 
     <!-- Filtro de desenfoque editable -->
-    <div class="slider-container">
+    <div class="slider-container" id="blurContainer" style="display: none;">
       <label for="blurSlider">Nivel de Desenfoque:</label>
       <input type="range" id="blurSlider" class="slider" min="1" max="10" value="5" step="1">
       <p>Nivel de desenfoque: <span id="blurValue">5</span></p>
@@ -259,6 +259,9 @@
       let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       let data = imageData.data;
 
+      // Ocultar todos los controles deslizantes
+      hideAllSliders();
+
       switch (filterType) {
         case 'bw': // Blanco y Negro
           document.getElementById("binOptions").style.display = "block";
@@ -283,6 +286,7 @@
           }
           break;
         case 'brightness': // Brillo
+          document.getElementById("brightnessContainer").style.display = "block";
           let brightnessValue = document.getElementById("brightnessSlider").value;
           for (let i = 0; i < data.length; i += 4) {
             data[i] += parseInt(brightnessValue);
@@ -291,6 +295,7 @@
           }
           break;
         case 'contrast': // Contraste
+          document.getElementById("contrastContainer").style.display = "block";
           let contrastValue = document.getElementById("contrastSlider").value;
           for (let i = 0; i < data.length; i += 4) {
             data[i] = data[i] * (1 + contrastValue / 100);
@@ -299,6 +304,7 @@
           }
           break;
         case 'blur': // Desenfoque
+          document.getElementById("blurContainer").style.display = "block";
           let blurValue = document.getElementById("blurSlider").value;
           let blurImage = applyBlur(imageData, blurValue);
           imageData = blurImage;
@@ -309,16 +315,15 @@
       document.getElementById("loading").style.display = "none";
     }
 
-    // Binarización de la imagen (ajustable)
-    document.getElementById("binSlider").addEventListener('input', function() {
-      document.getElementById("binValue").textContent = 'Valor: ' + this.value;
-    });
+    // Función para esconder todos los controles deslizantes
+    function hideAllSliders() {
+      document.getElementById("binOptions").style.display = "none";
+      document.getElementById("brightnessContainer").style.display = "none";
+      document.getElementById("contrastContainer").style.display = "none";
+      document.getElementById("blurContainer").style.display = "none";
+    }
 
     // Función de desenfoque editable
-    document.getElementById("blurSlider").addEventListener('input', function() {
-      document.getElementById("blurValue").textContent = this.value;
-    });
-
     function applyBlur(imageData, blurValue) {
       const data = imageData.data;
       const width = imageData.width;
@@ -344,6 +349,25 @@
       }
       return imageData;
     }
+
+    // Binarización de la imagen (ajustable)
+    document.getElementById("binSlider").addEventListener('input', function() {
+      document.getElementById("binValue").textContent = 'Valor: ' + this.value;
+    });
+
+    // Función para actualizar brillo y contraste
+    document.getElementById("brightnessSlider").addEventListener('input', function() {
+      document.getElementById("brightnessValue").textContent = this.value;
+    });
+
+    document.getElementById("contrastSlider").addEventListener('input', function() {
+      document.getElementById("contrastValue").textContent = this.value;
+    });
+
+    // Función para actualizar desenfoque
+    document.getElementById("blurSlider").addEventListener('input', function() {
+      document.getElementById("blurValue").textContent = this.value;
+    });
   </script>
 </body>
 </html>
