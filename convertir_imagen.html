@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Editor de Imágenes - Conversión y Filtros</title>
   <style>
-    /* Fondo y diseño básico */
+    /* Estilo base */
     body {
       background: linear-gradient(to right, #ff7e5f, #feb47b); /* Fondo con gradiente */
       font-family: 'Arial', sans-serif;
@@ -34,7 +34,7 @@
       margin-bottom: 20px;
     }
 
-    /* Cuadro del canvas */
+    /* Estilo para el canvas */
     canvas {
       border-radius: 8px;
       border: 1px solid #ccc;
@@ -44,7 +44,28 @@
       max-width: 600px;
     }
 
-    /* Botones */
+    /* Botón de elegir archivo mejorado */
+    #inputImage {
+      display: none;
+    }
+
+    .file-label {
+      background-color: #4CAF50;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+      margin-bottom: 20px;
+    }
+
+    .file-label:hover {
+      background-color: #45a049;
+      transform: scale(1.05);
+    }
+
+    /* Botones para filtros */
     button {
       background-color: #4CAF50;
       color: white;
@@ -85,6 +106,16 @@
       display: none;
     }
 
+    /* Estilo para los controles deslizantes (sliders) */
+    .slider-container {
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    .slider {
+      width: 80%;
+    }
+
     /* Animaciones suaves */
     @keyframes fadeIn {
       0% { opacity: 0; }
@@ -93,6 +124,16 @@
 
     .container {
       animation: fadeIn 1s ease-in-out;
+    }
+
+    /* Estilo para texto en la esquina */
+    .footer-text {
+      position: fixed;
+      bottom: 10px;
+      right: 20px;
+      font-size: 14px;
+      color: #333;
+      font-weight: bold;
     }
 
     /* Estilo responsive */
@@ -106,6 +147,10 @@
         width: 95%;
         padding: 15px;
       }
+
+      .slider {
+        width: 90%;
+      }
     }
   </style>
 </head>
@@ -113,7 +158,8 @@
   <div class="container">
     <h1>Editor de Imágenes - Conversión y Filtros</h1>
 
-    <!-- Carga de imagen -->
+    <!-- Botón para cargar imagen -->
+    <label for="inputImage" class="file-label">Selecciona una imagen</label>
     <input type="file" id="inputImage" accept="image/*" />
     
     <!-- Botones para convertir -->
@@ -133,6 +179,33 @@
       <button onclick="applyFilter('blur')">Desenfoque</button>
     </div>
 
+    <!-- Opciones adicionales para blanco y negro (binarización) -->
+    <div id="binOptions" class="slider-container" style="display: none;">
+      <label for="binSlider">Binarización:</label>
+      <input type="range" id="binSlider" class="slider" min="0" max="255" value="128" step="1">
+      <p id="binValue">Valor: 128</p>
+    </div>
+
+    <!-- Controles para brillo y contraste -->
+    <div class="slider-container">
+      <label for="brightnessSlider">Brillo:</label>
+      <input type="range" id="brightnessSlider" class="slider" min="-100" max="100" value="0" step="1">
+      <p>Valor de brillo: <span id="brightnessValue">0</span></p>
+    </div>
+
+    <div class="slider-container">
+      <label for="contrastSlider">Contraste:</label>
+      <input type="range" id="contrastSlider" class="slider" min="-100" max="100" value="0" step="1">
+      <p>Valor de contraste: <span id="contrastValue">0</span></p>
+    </div>
+
+    <!-- Filtro de desenfoque editable -->
+    <div class="slider-container">
+      <label for="blurSlider">Nivel de Desenfoque:</label>
+      <input type="range" id="blurSlider" class="slider" min="1" max="10" value="5" step="1">
+      <p>Nivel de desenfoque: <span id="blurValue">5</span></p>
+    </div>
+
     <!-- Mensaje de carga -->
     <div id="loading">Cargando...</div>
 
@@ -145,12 +218,16 @@
     </div>
   </div>
 
+  <div class="footer-text">
+    Creado por Enrique Junior Ccoya Cayra + 2 vagos
+  </div>
+
   <script>
     let img = new Image();
     let canvas = document.getElementById('canvas');
     let ctx = canvas.getContext('2d');
 
-    // Cargar imagen en el canvas
+    // Cargar la imagen en el canvas
     document.getElementById('inputImage').addEventListener('change', (event) => {
       let file = event.target.files[0];
       let reader = new FileReader();
@@ -184,6 +261,7 @@
 
       switch (filterType) {
         case 'bw': // Blanco y Negro
+          document.getElementById("binOptions").style.display = "block";
           for (let i = 0; i < data.length; i += 4) {
             let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
             data[i] = data[i + 1] = data[i + 2] = avg;
@@ -205,21 +283,24 @@
           }
           break;
         case 'brightness': // Brillo
+          let brightnessValue = document.getElementById("brightnessSlider").value;
           for (let i = 0; i < data.length; i += 4) {
-            data[i] += 50;     // R
-            data[i + 1] += 50; // G
-            data[i + 2] += 50; // B
+            data[i] += parseInt(brightnessValue);
+            data[i + 1] += parseInt(brightnessValue);
+            data[i + 2] += parseInt(brightnessValue);
           }
           break;
         case 'contrast': // Contraste
+          let contrastValue = document.getElementById("contrastSlider").value;
           for (let i = 0; i < data.length; i += 4) {
-            data[i] = data[i] * 1.5;
-            data[i + 1] = data[i + 1] * 1.5;
-            data[i + 2] = data[i + 2] * 1.5;
+            data[i] = data[i] * (1 + contrastValue / 100);
+            data[i + 1] = data[i + 1] * (1 + contrastValue / 100);
+            data[i + 2] = data[i + 2] * (1 + contrastValue / 100);
           }
           break;
         case 'blur': // Desenfoque
-          let blurImage = applyBlur(imageData);
+          let blurValue = document.getElementById("blurSlider").value;
+          let blurImage = applyBlur(imageData, blurValue);
           imageData = blurImage;
           break;
       }
@@ -228,30 +309,39 @@
       document.getElementById("loading").style.display = "none";
     }
 
-    // Función para aplicar desenfoque
-    function applyBlur(imageData) {
+    // Binarización de la imagen (ajustable)
+    document.getElementById("binSlider").addEventListener('input', function() {
+      document.getElementById("binValue").textContent = 'Valor: ' + this.value;
+    });
+
+    // Función de desenfoque editable
+    document.getElementById("blurSlider").addEventListener('input', function() {
+      document.getElementById("blurValue").textContent = this.value;
+    });
+
+    function applyBlur(imageData, blurValue) {
       const data = imageData.data;
       const width = imageData.width;
       const height = imageData.height;
 
+      let radius = parseInt(blurValue);
       for (let y = 1; y < height - 1; y++) {
         for (let x = 1; x < width - 1; x++) {
           const i = (y * width + x) * 4;
           let r = 0, g = 0, b = 0;
-          for (let j = -1; j <= 1; j++) {
-            for (let k = -1; k <= 1; k++) {
+          for (let j = -radius; j <= radius; j++) {
+            for (let k = -radius; k <= radius; k++) {
               const n = ((y + j) * width + (x + k)) * 4;
               r += data[n];
               g += data[n + 1];
               b += data[n + 2];
             }
           }
-          data[i] = r / 9;
-          data[i + 1] = g / 9;
-          data[i + 2] = b / 9;
+          data[i] = r / (radius * 2 + 1);
+          data[i + 1] = g / (radius * 2 + 1);
+          data[i + 2] = b / (radius * 2 + 1);
         }
       }
-
       return imageData;
     }
   </script>
